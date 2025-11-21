@@ -1,34 +1,126 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { compressImage } from './compressImage'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [originalSize, setOriginalSize] = useState(null);
+  const [compressedSize, setCompressedSize] = useState(null);
+  const [originalUrl, setOriginalUrl] = useState(null);
+  const [compressedUrl, setCompressedUrl] = useState(null);
+  const [originalName, setOriginalName] = useState(null);
+  const [nombre, setNombre] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0]
+    setError(null);
+    setLoading(true);
+    setOriginalSize(null);
+    setCompressedSize(null);
+    setOriginalUrl(null);
+    setCompressedUrl(null);
+
+    if (!file) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Mostrar la imegen original
+      setOriginalUrl(URL.createObjectURL(file));
+      setOriginalName(file.name);
+      setOriginalSize((file.size / 1024 / 1024).toFixed(2));
+const baseName = file.name.replace(/\.[^/.]+$/, ""); // sin extensión
+
+
+      // Comprimir la imagen
+      const compressedBlob = await compressImage(file, 1280, 0.6)
+      // Crear nueva imagen
+      const compressedFile = new File(
+        [compressedBlob],
+        `compressed_${baseName}.jpg`,
+        {
+          type: compressedBlob.type,
+          lastModified: Date.now()
+        }
+      )
+
+      setNombre(compressedFile.name);
+      // Definir los datos de la imagen comprimida
+      setCompressedSize((compressedFile.size / 1024 / 1024).toFixed(2));
+      setCompressedUrl(URL.createObjectURL(compressedFile));
+
+      console.log("Archivo comprimido para subir:", compressedFile)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div>
+      <h1>Comprimir Imagen Con canvas Blob Nativo</h1>
+      <p>Selecciona una imagen para comprimir</p>
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        disabled={loading}
+      />
+      {loading && <p style={{ color: "blue" }}>Comprimiendo imagen...</p>}
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+
+      <h2>Resultados de compresion:</h2>
+
+      <h3>Original</h3>
+      <p>Tamaño: **{originalSize} MB**</p>
+      {originalUrl && (
+        <img
+          src={originalUrl}
+          alt="Imagen Original"
+          style={{
+            maxWidth: "100%",
+            maxHeight: "200px",
+            border: "1px solid black",
+          }}
+        />
+      )}
+
+      <h3>Comprimida</h3>
+      <p>Tamaño:<strong style={{ color: "green" }}>{compressedSize}KB</strong></p>
+      {compressedUrl && (
+        <>
+          <img
+            src={compressedUrl}
+            alt="Imagen Comprimida"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "200px",
+              border: "1px solid black",
+            }}
+          />
+          <a
+            href={compressedUrl}
+            download={nombre}
+            style={{
+              display: "inline-block",
+              marginTop: "10px",
+              padding: "8px 12px",
+              backgroundColor: "#4CAF50",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+            }}
+          >
+            Descargar Imagen Comprimida
+          </a>
+        </>)}
+    </div>
   )
 }
 
