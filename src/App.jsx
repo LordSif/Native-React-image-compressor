@@ -12,8 +12,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-
-
   const handleFileChange = async (event) => {
     const file = event.target.files[0]
     setError(null);
@@ -29,33 +27,19 @@ function App() {
     }
 
     try {
-      // Mostrar la imegen original
+      // Datos de la imagen original
       setOriginalUrl(URL.createObjectURL(file));
       setOriginalName(file.name);
       setOriginalSize((file.size / 1024 / 1024).toFixed(2));
-const baseName = file.name.replace(/\.[^/.]+$/, ""); // sin extensión
 
+      const compressedFileReady = await compressImage(file, 1280, 0.6);
+      // Datos de la imagen comprimida
+      setNombre(compressedFileReady.name);
+      setCompressedSize((compressedFileReady.size / 1024 / 1024).toFixed(2));
+      setCompressedUrl(URL.createObjectURL(compressedFileReady));
 
-      // Comprimir la imagen
-      const compressedBlob = await compressImage(file, 1280, 0.6)
-      // Crear nueva imagen
-      const compressedFile = new File(
-        [compressedBlob],
-        `compressed_${baseName}.jpg`,
-        {
-          type: compressedBlob.type,
-          lastModified: Date.now()
-        }
-      )
-
-      setNombre(compressedFile.name);
-      // Definir los datos de la imagen comprimida
-      setCompressedSize((compressedFile.size / 1024 / 1024).toFixed(2));
-      setCompressedUrl(URL.createObjectURL(compressedFile));
-
-      console.log("Archivo comprimido para subir:", compressedFile)
-    } catch (err) {
-      setError(err.message)
+    } catch (error) {
+      setError(error.message)
     } finally {
       setLoading(false);
     }
@@ -63,7 +47,7 @@ const baseName = file.name.replace(/\.[^/.]+$/, ""); // sin extensión
 
   return (
     <div>
-      <h1>Comprimir Imagen Con canvas Blob Nativo</h1>
+      <h1>Comprimir imagen con Canvas Blob nativo</h1>
       <p>Selecciona una imagen para comprimir</p>
 
       <input
@@ -104,6 +88,7 @@ const baseName = file.name.replace(/\.[^/.]+$/, ""); // sin extensión
               border: "1px solid black",
             }}
           />
+          <h3>Descargar</h3>
           <a
             href={compressedUrl}
             download={nombre}

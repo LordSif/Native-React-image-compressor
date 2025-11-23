@@ -44,9 +44,24 @@ export const compressImage = (
         ctx.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
+          (compressedBlob) => {
+            if (compressedBlob) {
+              // Extraer el nombre base del archivo original
+              const originalName = imageFile.name;
+              const parts = originalName.split('.');
+              parts.length > 1 ? parts.pop() : 'jpg';
+              const baseName = parts.join('.') || 'image';
+
+              const compressedFile = new File(
+                [compressedBlob],
+                `compressed_${baseName}.jpg`,
+                {
+                  type: compressedBlob.type,
+                  lastModified: Date.now()
+                }
+              )
+
+              resolve(compressedFile);
             } else {
               reject(new Error("Error al generar el Blob comprimido."));
             }
